@@ -1,24 +1,52 @@
 package com.kuzmich.controller;
 
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
+import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
+import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 @Component
+@Slf4j
 public class TelegramBot extends TelegramLongPollingBot {
+
+    @Value("${bot.name}")
+    private String botName;
+    @Value("${bot.token}")
+    private String botToken;
+
     @Override
     public void onUpdateReceived(Update update) {
-        System.out.println(update.getMessage().getText());
+        Message recievedMessage = update.getMessage();
+        log.info(recievedMessage.getText());
 
+        SendMessage botResponse = new SendMessage();
+        botResponse.setChatId(String.valueOf(recievedMessage.getChatId()));
+        botResponse.setText("Welcome");
+        sendAnswerMessage(botResponse);
     }
+
+    public void sendAnswerMessage(SendMessage message) {
+        if(message != null) {
+            try {
+                execute(message);
+            } catch (TelegramApiException ex) {
+                log.error(ex.getMessage());
+            }
+        }
+    }
+
 
     @Override
     public String getBotToken() {
-        return "6925743259:AAFK1B4neEZ545CiEfhpw96faK7wUpaWikE";
+        return botToken;
     }
 
     @Override
     public String getBotUsername() {
-        return "KuzmichAppBot";
+        return botName;
     }
 }
