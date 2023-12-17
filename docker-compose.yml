@@ -1,0 +1,44 @@
+version: '3.9'
+
+services:
+  db:
+    image: postgres:14.5
+    hostname: postgres
+    container_name: postgres
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: userok
+      POSTGRES_PASSWORD: p@sswOrd
+      POSTGRES_DB: telegrambot
+    volumes:
+      - db_volume:/var/lib/postgresql/data
+    networks:
+      - rabbitmq_psql
+
+
+  rabbitmq:
+    image: rabbitmq:3.11-management
+    hostname: rabbitmq
+    container_name: rabbitmq
+    restart: unless-stopped
+    ports:
+      # AMQP protocol port
+      - "5672:5672"
+      # HTTP management UI
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: userok
+      RABBITMQ_DEFAULT_PASS: p@sswOrd
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - rabbitmq_psql
+
+volumes:
+  rabbitmq_data:
+  db_volume:
+networks:
+  rabbitmq_psql:
+    driver: bridge
