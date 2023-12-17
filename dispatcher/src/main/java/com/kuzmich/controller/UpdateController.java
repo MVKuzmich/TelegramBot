@@ -32,7 +32,7 @@ public class UpdateController {
             return;
         }
 
-        if(update.getMessage() != null) {
+        if(update.hasMessage()) {
             distributeMessageByType(update); // только обработка первоначальных сообщений из приватных чатов, остальные - ошибка
         } else {
             log.error("Received unsupported message type " + update);
@@ -45,11 +45,11 @@ public class UpdateController {
      */
     private void distributeMessageByType(Update update) {
         Message receivedMessage = update.getMessage();
-        if(receivedMessage.getText() != null) {
+        if(receivedMessage.hasText()) {
             processTextMessage(update);
-        } else if(receivedMessage.getDocument() != null) {
+        } else if(receivedMessage.hasDocument()) {
             processDocumentMessage(update);
-        } else if(receivedMessage.getPhoto() != null) {
+        } else if(receivedMessage.hasPhoto()) {
             processPhotoMessage(update);
         } else {
             setUnsupportedMessageTypeView(update);
