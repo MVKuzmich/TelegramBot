@@ -20,18 +20,14 @@ public class ConsumerServiceImpl implements ConsumerService {
     private static final String DOC_MESSAGE_UPDATE = "doc_message_update";
     private static final String PHOTO_MESSAGE_UPDATE = "photo_message_update";
 
-    private final ProducerService producerService;
+    private final MainService mainService;
 
     @Override
     @RabbitListener(queues = TEXT_MESSAGE_UPDATE)
     public void consumeTextMessageUpdates(Update update) {
         log.info("NODE: TEXT message is received");
-        Message message = update.getMessage();
-        SendMessage sendMessage = new SendMessage();
-        sendMessage.setChatId(message.getChatId().toString());
-        sendMessage.setText("Hello from NODE");
+        mainService.processTextMessage(update);
 
-        producerService.produceAnswer(sendMessage);
     }
 
     @Override
