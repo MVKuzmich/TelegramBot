@@ -52,10 +52,46 @@ public class MainServiceImpl implements MainService {
 
         String chatId = update.getMessage().getChatId().toString();
         sendAnswer(response, chatId);
+    }
 
+    @Override
+    public void processDocMessage(Update update) {
+        saveRawData(update);
+        AppUser appUser = findOrSaveAppUser(update);
+        String chatId = update.getMessage().getChatId().toString();
+        if(isNotAllowedSendContent(chatId, appUser)) {
+            return;
+        }
+        //TODO add algorithm for document saving
+        String response = "The document is uploaded successfully! The link for downloading: https://test.ru/document/777";
+        sendAnswer(response, chatId);
+    }
 
-        Message message = update.getMessage();
+    private boolean isNotAllowedSendContent(String chatId, AppUser appUser) {
+        UserState userState = appUser.getUserState();
+        if(!appUser.getIsActive()) {
+            String response = "To register or sig in in order to upload content!";
+            sendAnswer(response, chatId);
+            return true;
+        } else if(!BASIC_STATE.equals(userState)) {
+            String response = "This action is not allowed. PLease, cancel current command for file uploading via /cancel command.";
+            sendAnswer(response, chatId);
+            return true;
+        }
+        return false;
+    }
 
+    @Override
+    public void processPhotoMessage(Update update) {
+        saveRawData(update);
+        AppUser appUser = findOrSaveAppUser(update);
+        String chatId = update.getMessage().getChatId().toString();
+        if(isNotAllowedSendContent(chatId, appUser)) {
+            return;
+        }
+        //TODO add algorithm for photo saving
+        String response = "The photo is uploaded successfully! The link for downloading: https://test.ru/photo/777";
+        sendAnswer(response, chatId);
     }
 
     private void sendAnswer(String response, String chatId) {
