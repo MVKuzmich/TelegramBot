@@ -28,6 +28,10 @@ public class RabbitConfiguration {
         return new Queue(PHOTO_MESSAGE_UPDATE.getName());
     }
     @Bean
+    public Queue diceMessageQueue() {
+        return new Queue(DICE_MESSAGE_UPDATE.getName());
+    }
+    @Bean
     public Queue answerMessageQueue() {
         return new Queue(ANSWER_MESSAGE.getName());
     }

@@ -27,17 +27,16 @@ public class UpdateController {
     }
 
     public void processUpdate(Update update) {
-        if(update == null) {
+        if (update == null) {
             log.error("Received update is null");
             return;
         }
 
-        if(update.hasMessage()) {
+        if (update.hasMessage()) {
             distributeMessageByType(update); // только обработка первоначальных сообщений из приватных чатов, остальные - ошибка
         } else {
             log.error("Received unsupported message type " + update);
         }
-
     }
 
     /*
@@ -45,12 +44,14 @@ public class UpdateController {
      */
     private void distributeMessageByType(Update update) {
         Message receivedMessage = update.getMessage();
-        if(receivedMessage.hasText()) {
+        if (receivedMessage.hasText()) {
             processTextMessage(update);
-        } else if(receivedMessage.hasDocument()) {
+        } else if (receivedMessage.hasDocument()) {
             processDocumentMessage(update);
-        } else if(receivedMessage.hasPhoto()) {
+        } else if (receivedMessage.hasPhoto()) {
             processPhotoMessage(update);
+        } else if (receivedMessage.hasDice()) {
+            processDiceMessage(update);
         } else {
             setUnsupportedMessageTypeView(update);
         }
@@ -70,10 +71,12 @@ public class UpdateController {
         setFileIsReceivedView(update);
     }
 
-
-
     private void processDocumentMessage(Update update) {
         updateProducer.produce(DOC_MESSAGE_UPDATE, update);
+        setFileIsReceivedView(update);
+    }
+    private void processDiceMessage(Update update) {
+        updateProducer.produce(DICE_MESSAGE_UPDATE, update);
         setFileIsReceivedView(update);
     }
 

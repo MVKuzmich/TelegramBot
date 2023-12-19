@@ -7,5 +7,6 @@ public interface ConsumerService {
     void consumeTextMessageUpdates(Update update);
     void consumeDocMessageUpdates(Update update);
     void consumePhotoMessageUpdates(Update update);
+    void consumeDiceMessageUpdates(Update update);
 
 }

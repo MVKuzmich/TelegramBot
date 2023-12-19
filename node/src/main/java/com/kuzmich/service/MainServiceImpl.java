@@ -10,7 +10,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
-import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.User;
 
@@ -18,7 +17,8 @@ import java.util.Arrays;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import static com.kuzmich.entity.UserState.*;
+import static com.kuzmich.entity.UserState.BASIC_STATE;
+import static com.kuzmich.entity.UserState.WAIT_FOR_EMAIL_STATE;
 import static com.kuzmich.enums.ServiceCommands.*;
 
 @RequiredArgsConstructor
@@ -91,6 +91,14 @@ public class MainServiceImpl implements MainService {
         }
         //TODO add algorithm for photo saving
         String response = "The photo is uploaded successfully! The link for downloading: https://test.ru/photo/777";
+        sendAnswer(response, chatId);
+    }
+
+    @Override
+    public void processDiceMessage(Update update) {
+        saveRawData(update);
+        String chatId = update.getMessage().getChatId().toString();
+        String response = String.format("Dice has number %s", update.getMessage().getDice().getValue());
         sendAnswer(response, chatId);
     }
 
