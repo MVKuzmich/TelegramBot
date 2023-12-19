@@ -2,8 +2,10 @@ package com.kuzmich.enums;
 
 import lombok.Getter;
 
+import java.util.Arrays;
+
 @Getter
-public enum ServiceCommands {
+public enum ServiceCommand {
     HELP("/help", "List of commands"),
     REGISTRATION("/registration", "User registration"),
     CANCEL("/cancel", "Cancel current command"),
@@ -13,12 +15,15 @@ public enum ServiceCommands {
     private final String description;
 
 
-    ServiceCommands(String command, String description) {
+    ServiceCommand(String command, String description) {
         this.command = command;
         this.description = description;
     }
 
-    public boolean equals(String command) {
-        return this.getCommand().equals(command);
-    }
+   public static ServiceCommand fromText(String text) {
+        return Arrays.stream(ServiceCommand.values())
+                .filter(cmd -> cmd.getCommand().equals(text))
+                .findFirst()
+                .orElse(null);
+   }
 }

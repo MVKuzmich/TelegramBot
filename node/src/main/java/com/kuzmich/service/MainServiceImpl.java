@@ -1,9 +1,11 @@
 package com.kuzmich.service;
 
+import com.kuzmich.entity.AppDocument;
 import com.kuzmich.entity.AppUser;
 import com.kuzmich.entity.RawData;
 import com.kuzmich.entity.UserState;
-import com.kuzmich.enums.ServiceCommands;
+import com.kuzmich.enums.ServiceCommand;
+import com.kuzmich.exceptions.UploadFileException;
 import com.kuzmich.repository.AppUserRepository;
 import com.kuzmich.repository.RawDataRepository;
 import lombok.RequiredArgsConstructor;
@@ -19,7 +21,7 @@ import java.util.stream.Collectors;
 
 import static com.kuzmich.entity.UserState.BASIC_STATE;
 import static com.kuzmich.entity.UserState.WAIT_FOR_EMAIL_STATE;
-import static com.kuzmich.enums.ServiceCommands.*;
+import static com.kuzmich.enums.ServiceCommand.*;
 
 @RequiredArgsConstructor
 @Service
@@ -29,6 +31,7 @@ public class MainServiceImpl implements MainService {
     private final RawDataRepository rawDataRepository;
     private final ProducerService producerService;
     private final AppUserRepository appUserRepository;
+    private final FileService fileService;
     @Override
     public void processTextMessage(Update update) {
         saveRawData(update);
@@ -38,7 +41,8 @@ public class MainServiceImpl implements MainService {
         String messageText = update.getMessage().getText();
         String response = "";
 
-        if(CANCEL.equals(messageText)) {
+        ServiceCommand serviceCommand = ServiceCommand.fromText(messageText);
+        if(CANCEL.equals(serviceCommand)) {
             response = cancelProcess(appUser);
         } else if(BASIC_STATE.equals(userState)) {
             response = processServiceCommand(appUser, messageText);
@@ -62,15 +66,24 @@ public class MainServiceImpl implements MainService {
         if(isNotAllowedSendContent(chatId, appUser)) {
             return;
         }
-        //TODO add algorithm for document saving
-        String response = "The document is uploaded successfully! The link for downloading: https://test.ru/document/777";
-        sendAnswer(response, chatId);
+
+        try {
+            AppDocument document = fileService.processDoc(update.getMessage());
+            //TODO add algorithm for link building to download document
+            String response = "The document is uploaded successfully! The link for downloading: https://test.ru/document/777";
+            sendAnswer(response, chatId);
+        } catch (UploadFileException ex) {
+            log.info(ex.getMessage());
+            String errorMessage = "Unfortunately, file is not downloaded. Make an attempt later.";
+            sendAnswer(errorMessage, chatId);
+        }
+
     }
 
     private boolean isNotAllowedSendContent(String chatId, AppUser appUser) {
         UserState userState = appUser.getUserState();
         if(!appUser.getIsActive()) {
-            String response = "To register or sig in in order to upload content!";
+            String response = "To register or sign in in order to upload content!";
             sendAnswer(response, chatId);
             return true;
         } else if(!BASIC_STATE.equals(userState)) {
@@ -120,7 +133,7 @@ public class MainServiceImpl implements MainService {
     }
 
     private String allCommandsList() {
-        String commandList = Arrays.stream(ServiceCommands.values())
+        String commandList = Arrays.stream(ServiceCommand.values())
                 .map(cmd -> cmd.getCommand() + " - " + cmd.getDescription())
                 .collect(Collectors.joining("\n"));
         return String.format("List of commands:\n%s", commandList);
