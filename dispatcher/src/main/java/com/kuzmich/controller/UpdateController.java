@@ -68,24 +68,24 @@ public class UpdateController {
 
     private void processPhotoMessage(Update update) {
         updateProducer.produce(PHOTO_MESSAGE_UPDATE, update);
-        setFileIsReceivedView(update);
+        setFileIsReceivedView(update, "Photo is received and processed");
     }
 
     private void processDocumentMessage(Update update) {
         updateProducer.produce(DOC_MESSAGE_UPDATE, update);
-        setFileIsReceivedView(update);
+        setFileIsReceivedView(update, "Document is received and processed");
     }
     private void processDiceMessage(Update update) {
         updateProducer.produce(DICE_MESSAGE_UPDATE, update);
-        setFileIsReceivedView(update);
+        setFileIsReceivedView(update, "DICE is received and processed");
     }
 
     private void processTextMessage(Update update) {
         updateProducer.produce(TEXT_MESSAGE_UPDATE, update);
     }
 
-    private void setFileIsReceivedView(Update update) {
-        SendMessage sendMessage = messageUtils.generateSendMessageWithText(update, "File is received and processed");
+    private void setFileIsReceivedView(Update update, String message) {
+        SendMessage sendMessage = messageUtils.generateSendMessageWithText(update, message);
         setView(sendMessage);
     }
 }
