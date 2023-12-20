@@ -1,9 +1,6 @@
 package com.kuzmich.service;
 
-import com.kuzmich.entity.AppDocument;
-import com.kuzmich.entity.AppUser;
-import com.kuzmich.entity.RawData;
-import com.kuzmich.entity.UserState;
+import com.kuzmich.entity.*;
 import com.kuzmich.enums.ServiceCommand;
 import com.kuzmich.exceptions.UploadFileException;
 import com.kuzmich.repository.AppUserRepository;
@@ -102,9 +99,17 @@ public class MainServiceImpl implements MainService {
         if(isNotAllowedSendContent(chatId, appUser)) {
             return;
         }
-        //TODO add algorithm for photo saving
-        String response = "The photo is uploaded successfully! The link for downloading: https://test.ru/photo/777";
-        sendAnswer(response, chatId);
+        try {
+            AppPhoto appPhoto = fileService.processPhoto(update.getMessage());
+            //TODO add algorithm for link building to download photo
+            String response = "The photo is uploaded successfully! The link for downloading: https://test.ru/photo/777";
+            sendAnswer(response, chatId);
+        } catch(UploadFileException ex) {
+            log.info(ex.getMessage());
+            String errorMessage = "Unfortunately, photo is not downloaded. Make an attempt later.";
+            sendAnswer(errorMessage, chatId);
+        }
+
     }
 
     @Override

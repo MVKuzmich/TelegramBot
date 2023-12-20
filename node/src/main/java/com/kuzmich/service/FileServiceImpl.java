@@ -1,9 +1,11 @@
 package com.kuzmich.service;
 
 import com.kuzmich.entity.AppDocument;
+import com.kuzmich.entity.AppPhoto;
 import com.kuzmich.entity.BinaryContent;
 import com.kuzmich.exceptions.UploadFileException;
 import com.kuzmich.repository.AppDocumentRepository;
+import com.kuzmich.repository.AppPhotoRepository;
 import com.kuzmich.repository.BinaryContentRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -14,6 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.telegram.telegrambots.meta.api.objects.Document;
 import org.telegram.telegrambots.meta.api.objects.Message;
+import org.telegram.telegrambots.meta.api.objects.PhotoSize;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -32,6 +35,7 @@ public class FileServiceImpl implements FileService {
     private String fileStorageUri;
 
     private final AppDocumentRepository appDocumentRepository;
+    private final AppPhotoRepository appPhotoRepository;
     private final BinaryContentRepository binaryContentRepository;
     @Override
     public AppDocument processDoc(Message telegramMessage) throws UploadFileException {
@@ -39,22 +43,54 @@ public class FileServiceImpl implements FileService {
         String fileId = telegramDocument.getFileId();
         ResponseEntity<String> response = getFilePath(fileId);
         if(response.getStatusCode() == HttpStatus.OK) {
-            JSONObject jsonObject = new JSONObject(response.getBody());
-            String filePath = String.valueOf(jsonObject
-                    .getJSONObject("result")
-                    .getString("file_path")
-            );
-            byte[] fileInByte = downloadFile(filePath);
-            BinaryContent transientBinaryContent = BinaryContent.builder()
-                    .fileAsArrayOfBytes(fileInByte)
-                    .build();
-            BinaryContent persistentBinaryContent = binaryContentRepository.save(transientBinaryContent);
+            BinaryContent persistentBinaryContent = getPersistentBinaryContent(response);
             AppDocument transientAppDocument = buildTransientAppDocument(telegramDocument, persistentBinaryContent);
             return appDocumentRepository.save(transientAppDocument);
         } else {
             throw new UploadFileException("Bad response from telegram service: " + response);
         }
     }
+    @Override
+    public AppPhoto processPhoto(Message telegramMessage) {
+        //TODO подразумеваем, что обрабатываем только одно фото (но может прийти альльбом)
+        PhotoSize telegramPhoto = telegramMessage.getPhoto().get(0);
+        String fileId = telegramPhoto.getFileId();
+        ResponseEntity<String> response = getFilePath(fileId);
+        if(response.getStatusCode() == HttpStatus.OK) {
+            BinaryContent persistentBinaryContent = getPersistentBinaryContent(response);
+            AppPhoto transientAppPhoto = buildTransientAppPhoto(telegramPhoto, persistentBinaryContent);
+            return appPhotoRepository.save(transientAppPhoto);
+        } else {
+            throw new UploadFileException("Bad response from telegram service: " + response);
+        }
+    }
+
+    private AppPhoto buildTransientAppPhoto(PhotoSize telegramPhoto, BinaryContent persistentBinaryContent) {
+        return AppPhoto.builder()
+                .binaryContent(persistentBinaryContent)
+                .fileSize(telegramPhoto.getFileSize().longValue())
+                .telegramFieldId(telegramPhoto.getFileId())
+                .build();
+    }
+
+
+    private BinaryContent getPersistentBinaryContent(ResponseEntity<String> response) {
+        String filePath = getFilePath(response);
+        byte[] fileInByte = downloadFile(filePath);
+        BinaryContent transientBinaryContent = BinaryContent.builder()
+                .fileAsArrayOfBytes(fileInByte)
+                .build();
+        return binaryContentRepository.save(transientBinaryContent);
+    }
+
+    private String getFilePath(ResponseEntity<String> response) {
+        JSONObject jsonObject = new JSONObject(response.getBody());
+        return String.valueOf(jsonObject
+                .getJSONObject("result")
+                .getString("file_path")
+        );
+    }
+
 
     private byte[] downloadFile(String filePath) {
         String fullUri = fileStorageUri
