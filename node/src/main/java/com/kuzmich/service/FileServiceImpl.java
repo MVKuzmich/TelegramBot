@@ -3,10 +3,12 @@ package com.kuzmich.service;
 import com.kuzmich.entity.AppDocument;
 import com.kuzmich.entity.AppPhoto;
 import com.kuzmich.entity.BinaryContent;
+import com.kuzmich.enums.PathType;
 import com.kuzmich.exceptions.UploadFileException;
 import com.kuzmich.repository.AppDocumentRepository;
 import com.kuzmich.repository.AppPhotoRepository;
 import com.kuzmich.repository.BinaryContentRepository;
+import com.kuzmich.utils.CryptoTool;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.json.JSONObject;
@@ -34,9 +36,13 @@ public class FileServiceImpl implements FileService {
     @Value("${service.file_storage.uri}")
     private String fileStorageUri;
 
+    @Value("${rest-service.host}")
+    private String restServiceHost;
+
     private final AppDocumentRepository appDocumentRepository;
     private final AppPhotoRepository appPhotoRepository;
     private final BinaryContentRepository binaryContentRepository;
+    private final CryptoTool cryptoTool;
     @Override
     public AppDocument processDoc(Message telegramMessage) throws UploadFileException {
         Document telegramDocument = telegramMessage.getDocument();
@@ -64,6 +70,12 @@ public class FileServiceImpl implements FileService {
         } else {
             throw new UploadFileException("Bad response from telegram service: " + response);
         }
+    }
+
+    @Override
+    public String generateDownloadLink(Long fileId, PathType path) {
+        String hash = cryptoTool.toHash(fileId);
+        return "http://" + restServiceHost + path.getPath() + "?id=" + hash;
     }
 
     private AppPhoto buildTransientAppPhoto(PhotoSize telegramPhoto, BinaryContent persistentBinaryContent) {

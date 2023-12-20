@@ -1,6 +1,7 @@
 package com.kuzmich.service;
 
 import com.kuzmich.entity.*;
+import com.kuzmich.enums.PathType;
 import com.kuzmich.enums.ServiceCommand;
 import com.kuzmich.exceptions.UploadFileException;
 import com.kuzmich.repository.AppUserRepository;
@@ -66,8 +67,8 @@ public class MainServiceImpl implements MainService {
 
         try {
             AppDocument document = fileService.processDoc(update.getMessage());
-            //TODO add algorithm for link building to download document
-            String response = "The document is uploaded successfully! The link for downloading: https://test.ru/document/777";
+            String downloadLink = fileService.generateDownloadLink(document.getId(), PathType.GET_DOCUMENT);
+            String response = "The document is uploaded successfully! The link for downloading:" + downloadLink;
             sendAnswer(response, chatId);
         } catch (UploadFileException ex) {
             log.info(ex.getMessage());
@@ -101,8 +102,8 @@ public class MainServiceImpl implements MainService {
         }
         try {
             AppPhoto appPhoto = fileService.processPhoto(update.getMessage());
-            //TODO add algorithm for link building to download photo
-            String response = "The photo is uploaded successfully! The link for downloading: https://test.ru/photo/777";
+            String downloadLink = fileService.generateDownloadLink(appPhoto.getId(), PathType.GET_PHOTO);
+            String response = "The photo is uploaded successfully! The link for downloading:" + downloadLink;
             sendAnswer(response, chatId);
         } catch(UploadFileException ex) {
             log.info(ex.getMessage());
