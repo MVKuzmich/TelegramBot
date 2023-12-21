@@ -1,8 +1,12 @@
 package com.kuzmich.dto;
 
-import lombok.Value;
+import lombok.*;
 
-@Value
+@Getter
+@Setter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class MailParams {
     String id;
     String emailTo;
