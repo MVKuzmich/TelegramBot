@@ -40,19 +40,4 @@ public class FileServiceImpl implements FileService {
         }
         return appPhotoRepository.findById(id).orElse(null);
     }
-
-    @Override
-    public FileSystemResource getFileSystemResource(BinaryContent binaryContent) {
-        //TODO добавить генерацию имени временного файла
-        try {
-            File temp = File.createTempFile("tempFile", ".bin");
-            temp.deleteOnExit();
-            FileUtils.writeByteArrayToFile(temp, binaryContent.getFileAsArrayOfBytes());
-            return new FileSystemResource(temp);
-
-        } catch (IOException e) {
-            log.error(e.getMessage());
-            return null;
-        }
-    }
 }
