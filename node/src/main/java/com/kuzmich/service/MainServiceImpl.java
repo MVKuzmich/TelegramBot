@@ -30,6 +30,7 @@ public class MainServiceImpl implements MainService {
     private final ProducerService producerService;
     private final AppUserRepository appUserRepository;
     private final FileService fileService;
+    private final AppUserService appUserService;
     @Override
     public void processTextMessage(Update update) {
         saveRawData(update);
@@ -45,8 +46,7 @@ public class MainServiceImpl implements MainService {
         } else if(BASIC_STATE.equals(userState)) {
             response = processServiceCommand(appUser, messageText);
         } else if (WAIT_FOR_EMAIL_STATE.equals(userState)) {
-            //TODO добавить обработку email
-
+            response = appUserService.setEmail(appUser, messageText);
         } else {
             log.info("Unknown user state " + userState);
             response = "Unknown error! Enter /cancel and try again!";
@@ -126,12 +126,11 @@ public class MainServiceImpl implements MainService {
     }
 
     private String processServiceCommand(AppUser appUser, String messageText) {
-        if(REGISTRATION.equals(messageText)) {
-            //TODO добавить функционал по регистрации
-            return "It's temporarily inaccessible.";
-        } else if(HELP.equals(messageText)) {
+        if(REGISTRATION.getCommand().equals(messageText)) {
+            return appUserService.registerUser(appUser);
+        } else if(HELP.getCommand().equals(messageText)) {
             return allCommandsList();
-        } else if(START.equals(messageText)) {
+        } else if(START.getCommand().equals(messageText)) {
             return "Welcome! To receive list of commands please enter /help.";
         } else {
             return "Unknown command! To receive list of commands please enter /help.";
@@ -166,8 +165,7 @@ public class MainServiceImpl implements MainService {
                     .username(telegramUser.getUserName())
                     .firstName(telegramUser.getFirstName())
                     .lastName(telegramUser.getLastName())
-                    //TODO изменить значение по умолчанию после добавления регистрации
-                    .isActive(true)
+                    .isActive(false)
                     .userState(BASIC_STATE)
                     .build();
             return appUserRepository.save(transientAppUser);
